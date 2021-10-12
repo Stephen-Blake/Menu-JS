@@ -29,15 +29,16 @@ class mobileMenu {
   'use strict';
 
   state = {
-    "animation" : null,
-    "active" : false,
-    "openedBind" : true,
-    "beforeOpen": () => {},
-    "afterOpen": () => {},
-    "whenClosing": () => {},
+    'animation': 'slide', // default slide
+    'active': false,
+    'beforeOpen': () => {},
+    'afterOpen': () => {},
+    'beforeClose': () => {},
+    'afterClose': () => {}
   };
 
-  constructor( animation ) {
+  constructor() {
+
     if (mobileMenu._instance) {
       return;
     }
@@ -46,21 +47,38 @@ class mobileMenu {
 
     this.state.setHeight = window.innerHeight;
 
-    this.state.animation = animation;
-
-    document.querySelector('#header-bars-wrap').addEventListener( 'click', this.clickEvent.bind(this) );
+    document.querySelector('#header-bars-wrap').addEventListener(
+      'click',
+      this.#click.bind(this)
+    );
 
   }
 
-  clickEvent() {
+  #open = () => {
+
+    this.state.afterOpen()
+
+  }
+
+  #close = () => {
+
+    this.state.afterClose();
+
+  }
+
+  #changeActive = () => {
 
     this.state.active == false ? this.state.active = true : this.state.active = false;
 
-    if( this.state.active == true )
-      this.state.beforeOpen();
-    else
-      this.state.whenClosing();
+  }
 
+  #toggleEvents = () => {
+
+    this.state.active ? this.state.beforeOpen() : this.state.beforeClose();
+
+  }
+
+  #menuIconsChange = () => {
 
     document.querySelector('#header-bars-wrap').childNodes.forEach(
       child => {
@@ -68,28 +86,43 @@ class mobileMenu {
       }
     );
 
+  }
+
+  #makeRequest = async( callback ) => {
+
+    const transitionPromise = new Promise( (resolve, reject) => {
+      document.querySelector('.xs-menu-wrap').addEventListener('transitionend', (e) => {
+         resolve(true);
+      });
+    });
+
+    await transitionPromise.then( callback );
+
+  }
+
+  #click = () => {
+
+    this.#changeActive();
+    this.#toggleEvents();
+    this.#menuIconsChange();
+
+    document.querySelector('.xs-menu-wrap').classList.toggle("open");
+    document.body.classList.toggle("no-scroll");
+
     if(this.state.animation)
       document.querySelector('.xs-menu-wrap').classList.add( this.state.animation );
 
-    document.querySelector('.xs-menu-wrap').classList.toggle("open");
-
-    document.body.classList.toggle("no-scroll");
-
-    if (this.state.openedBind)
-      document.querySelector('.xs-menu-wrap').addEventListener('transitionend', function onceOpened(event) {
-        this.state.openedBind = false;
-        if(this.state.active == true)
-          this.state.afterOpen();
-      }.bind(this), false);
+    this.#makeRequest( this.state.active ? this.#open : this.#close );
 
   }
 
 }
 
+
 jQuery(window).on('load', function(){
 
-  new mobileMenu('slide');
-
+  new mobileMenu();
+	
 });
 
 </script>
@@ -107,8 +140,9 @@ jQuery(window).on('load', function(){
 		bottom: 0;
 		width: 0px;
 		height: 100%;
-		background: #D62225;
-		opacity: 1;
+		background: #F29200;
+		opacity: 0;
+    overflow: hidden;
 	}
 
 	#xs-menu-inner-wrap {
@@ -143,11 +177,12 @@ jQuery(window).on('load', function(){
 		text-align: center;
 	}
 
+  .nav>li.active>a,
 	.nav>li>a:focus,
 	.nav>li>a:hover {
 		text-decoration: none;
-		background-color: transparent;
-		color: #fff;
+		background-color: none;
+		color: #2E3185;
 	}
 
 	.xs-menu-wrap.open {
@@ -178,7 +213,7 @@ jQuery(window).on('load', function(){
 	.bar3 {
 		width: 35px;
 		height: 3.1px;
-		background-color: #D62225;
+		background-color: #2E3185;
 		margin: 6px auto;
 		transition: 0.4s;
 	}
@@ -230,18 +265,17 @@ jQuery(window).on('load', function(){
 	}
 
 	.header-xs-icons a {
-		color: #000;
+		color: #2E3185;
 	}
 
 	header#header {
 		position: relative;
-		z-index: 99;
 	}
 
 	#header-bars-wrap {
 		cursor: pointer;
 		position: relative;
-		z-index: 99;
+    z-index: 999;
 	}
 
 }
